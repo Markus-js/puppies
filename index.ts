@@ -9,7 +9,7 @@ const app: Express = express();
 const PORT = 8080
 
 // THIS STRING IS THE LINK TO OUR MONGODB
-const url = "mongodb+srv://markus:admin1234@pgp.rf5yxzi.mongodb.net/?retryWrites=true&w=majority"
+const url = process.env.MONGO_URL;
 
 main().catch(err => console.log(err));
 
@@ -25,7 +25,5 @@ const kittySchema = new mongoose.Schema({
 const Kitten = mongoose.model('sharks', kittySchema);
 
 const silence = new Kitten({ name: 'Silence' }).save();
-
-
 
 app.listen(PORT, () => console.log(`app running on port ${PORT}`))
