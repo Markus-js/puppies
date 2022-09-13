@@ -1,44 +1,66 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import * as mongoose from 'mongoose';
-import { Puppy } from './models/puppies'
-import { getAll, postPuppy } from './db'
+import bodyParser from 'body-parser';
+
 dotenv.config();
 
 const app: Express = express();
 
 const PORT = 8080
 
-// // THIS STRING IS THE LINK TO OUR MONGODB
-// const url:string = process.env.MONGO_URL!;
+// THIS STRING IS THE LINK TO OUR MONGODB
+const url:string = process.env.MONGO_URL!;
 
-// main().catch(err => console.log(err));
+main().catch(err => console.log(err));
 
-// async function main() {
-//   await mongoose.connect(url);
+async function main() {
+  await mongoose.connect(url);
   
-// }
+}
 
-// const kittySchema = new mongoose.Schema({
-//   name: String
-// });
+app.use(bodyParser.json());
 
-// const Kitten = mongoose.model('sharks', kittySchema);
+interface PuppyInfo {
+  name: string,
+  breed: string,
+  birthDate: string
+}
 
-// const silence = new Puppy({ name: 'Summer',
-//                             breed: 'Golden Retriever',
-//                             birthDate: '20-04-2019' })
-//                             .save();
+const puppySchema = new mongoose.Schema<PuppyInfo>({
+    name: { type: String, required: true },
+    breed: {type: String, required: true},
+    birthDate: {type: String, required: true}
+  });
 
-app.get('/all', async(req, res)=> {
-  const allPuppies = await getAll()
-  return res.json({allPuppies})
-})
+const Puppy = mongoose.model('puppies', puppySchema);
 
-app.post("/", async (req, res) => {
-  const newPuppy = await postPuppy(req.body);
-  console.log(req.body)
-  return res.json({newPuppy})
-})
+app.get('/puppies', async (req: Request, res: Response) => {
+  const puppies = await Puppy.find();
+  res.send(puppies);
+});
+
+app.get('/puppies/:id', async (req: Request, res: Response) => {
+  const puppy = await Puppy.findById(req.params.id);
+  res.send(puppy);
+});
+
+app.post('/puppies', async (req: Request, res: Response) => {
+  const puppy = new Puppy(req.body);
+  await puppy.save();
+  res.send(puppy);
+});
+
+app.put('/puppies/:id', async (req: Request, res: Response) => {
+  const puppy = await Puppy.findByIdAndUpdate(req.params.id, req.body);
+  await puppy!.save();
+  res.send(puppy);
+});
+
+app.delete('/puppies/:id', async (req: Request, res: Response) => {
+  const puppy = await Puppy.findByIdAndDelete(req.params.id);
+  if (!puppy) res.status(404).send('No puppy found');
+  res.status(200).send();
+});
 
 app.listen(PORT, () => console.log(`app running on port ${PORT}`))
